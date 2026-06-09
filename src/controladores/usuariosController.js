@@ -5,10 +5,12 @@ const usuariosController = {
         try {
             const data = await usuariosService.getAll();
             res.json({ status: true, data });
+
         } catch (error) {
             res.status(500).json({ status: false, mensaje: "Error al obtener usuarios", error: error.message });
         }
     },
+
 
     getUsuarioById: async (req, res) => {
         try {
@@ -24,10 +26,12 @@ const usuariosController = {
         try {
             const id_usuario = await usuariosService.create(req.body);
             res.status(201).json({ status: true, mensaje: "Creado correctamente", id_usuario });
+
         } catch (error) {
             res.status(500).json({ status: false, mensaje: "Error al crear usuario", error: error.message });
         }
     },
+
 
     editarUsuario: async (req, res) => {
         try {
@@ -39,10 +43,12 @@ const usuariosController = {
         }
     },
 
+
     eliminarUsuario: async (req, res) => {
         try {
             const affected = await usuariosService.delete(parseInt(req.params.id));
             if (affected === 0) return res.status(404).json({ status: false, mensaje: "Usuario no encontrado para eliminar" });
+
             res.json({ status: true, mensaje: "Usuario dado de baja (lógica)" });
         } catch (error) {
             res.status(500).json({ status: false, mensaje: "Error al eliminar", error: error.message });
