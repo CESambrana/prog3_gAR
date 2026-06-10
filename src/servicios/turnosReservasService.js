@@ -104,12 +104,12 @@ const turnosReservasService = {
         }
     },
 
-    marcarAtendido: async (id, id_usuario) => {
+    marcarAtendido: async (id, id_usuario, observaciones) => {
         const [medico] = await db.query("SELECT id_medico FROM medicos WHERE id_usuario = ?", [id_usuario]);
         if (medico.length === 0) return null;
         const [result] = await db.query(
-            "UPDATE turnos_reservas SET atendido = 1 WHERE id_turno_reserva = ? AND id_medico = ? AND activo = 1",
-            [id, medico[0].id_medico]
+            "UPDATE turnos_reservas SET atendido = 1, observaciones = ? WHERE id_turno_reserva = ? AND id_medico = ? AND activo = 1",
+            [observaciones || null, id, medico[0].id_medico]
         );
         return result.affectedRows;
     },
