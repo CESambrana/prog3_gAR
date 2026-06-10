@@ -82,6 +82,7 @@ const verificarRol = require("../../middlewares/verificarRol");
  *         required: true
  *         schema:
  *           type: integer
+
  *     requestBody:
  *       content:
  *         application/json:
