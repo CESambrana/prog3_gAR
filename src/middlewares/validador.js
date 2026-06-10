@@ -23,7 +23,23 @@ const validacionDeUsuario = [
     validarCampos
 ];
 
-module.exports = { 
-    validarCampos, 
-    validacionDeUsuario 
+const validacionDeEspecialidad = [
+    body('nombre', 'El nombre es obligatorio').trim().notEmpty(),
+    body('nombre', 'El nombre no puede superar 120 caracteres').isLength({ max: 120 }),
+    validarCampos
+];
+
+const validacionDeObraSocial = [
+    body('nombre', 'El nombre es obligatorio').trim().notEmpty(),
+    body('nombre', 'El nombre no puede superar 120 caracteres').isLength({ max: 120 }),
+    body('porcentaje_descuento', 'El porcentaje debe ser un número').isDecimal(),
+    body('es_particular', 'es_particular debe ser 0 o 1').isInt({ min: 0, max: 1 }),
+    validarCampos
+];
+
+module.exports = {
+    validarCampos,
+    validacionDeUsuario,
+    validacionDeEspecialidad,
+    validacionDeObraSocial
 };
