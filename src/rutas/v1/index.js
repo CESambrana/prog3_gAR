@@ -8,6 +8,7 @@ const medicosRoutes = require("./medicosRoutes");
 const pacientesRoutes = require("./pacientesRoutes");
 const turnosReservasRoutes = require("./turnosReservasRoutes");
 const estadisticasRoutes = require("./estadisticasRoutes");
+const auditoriaRoutes = require("./auditoriaRoutes");
 
 router.use("/auth", authRoutes);
 router.use("/usuarios", usuariosRoutes);
@@ -17,5 +18,6 @@ router.use("/medicos", medicosRoutes);
 router.use("/pacientes", pacientesRoutes);
 router.use("/turnos-reservas", turnosReservasRoutes);
 router.use("/estadisticas", estadisticasRoutes);
+router.use("/auditoria", auditoriaRoutes);
 
 module.exports = router;

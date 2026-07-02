@@ -1,57 +1,38 @@
 const db = require('../db/db');
+const turnosReservasRepo = require('../repositorios/turnosReservasRepo');
+const medicosRepo = require('../repositorios/medicosRepo');
+const pacientesRepo = require('../repositorios/pacientesRepo');
+const obrasSocialesRepo = require('../repositorios/obrasSocialesRepo');
+
+const formatTurnoDTO = (turno) => ({
+    id: turno.id_turno_reserva,
+    fecha: turno.fecha_hora,
+    valor: turno.valor_total,
+    atendido: turno.atendido === 1,
+    medico: turno.medico_apellido ? `${turno.medico_apellido}, ${turno.medico_nombres}` : undefined,
+    paciente: turno.paciente_apellido ? `${turno.paciente_apellido}, ${turno.paciente_nombres}` : undefined,
+    especialidad: turno.especialidad || undefined,
+    obra_social: turno.obra_social || undefined
+});
 
 const turnosReservasService = {
     getAll: async () => {
-        const [rows] = await db.query(`
-            SELECT tr.id_turno_reserva, tr.fecha_hora, tr.valor_total, tr.atendido,
-                   u_m.apellido AS medico_apellido, u_m.nombres AS medico_nombres,
-                   u_p.apellido AS paciente_apellido, u_p.nombres AS paciente_nombres,
-                   os.nombre AS obra_social
-            FROM turnos_reservas tr
-            JOIN medicos m ON tr.id_medico = m.id_medico
-            JOIN usuarios u_m ON m.id_usuario = u_m.id_usuario
-            JOIN pacientes p ON tr.id_paciente = p.id_paciente
-            JOIN usuarios u_p ON p.id_usuario = u_p.id_usuario
-            JOIN obras_sociales os ON tr.id_obra_social = os.id_obra_social
-            WHERE tr.activo = 1
-            ORDER BY tr.fecha_hora DESC
-        `);
-        return rows;
+        const rows = await turnosReservasRepo.getAll();
+        return rows.map(formatTurnoDTO);
     },
 
     getMisTurnosMedico: async (id_usuario) => {
-        const [medico] = await db.query("SELECT id_medico FROM medicos WHERE id_usuario = ?", [id_usuario]);
-        if (medico.length === 0) return null;
-        const [rows] = await db.query(`
-            SELECT tr.id_turno_reserva, tr.fecha_hora, tr.valor_total, tr.atendido,
-                   u_p.apellido AS paciente_apellido, u_p.nombres AS paciente_nombres,
-                   os.nombre AS obra_social
-            FROM turnos_reservas tr
-            JOIN pacientes p ON tr.id_paciente = p.id_paciente
-            JOIN usuarios u_p ON p.id_usuario = u_p.id_usuario
-            JOIN obras_sociales os ON tr.id_obra_social = os.id_obra_social
-            WHERE tr.id_medico = ? AND tr.activo = 1
-            ORDER BY tr.fecha_hora DESC
-        `, [medico[0].id_medico]);
-        return rows;
+        const medico = await medicosRepo.getByUsuarioId(id_usuario);
+        if (!medico) return null;
+        const rows = await turnosReservasRepo.getByMedicoId(medico.id_medico);
+        return rows.map(formatTurnoDTO);
     },
 
     getMisTurnosPaciente: async (id_usuario) => {
-        const [paciente] = await db.query("SELECT id_paciente FROM pacientes WHERE id_usuario = ?", [id_usuario]);
-        if (paciente.length === 0) return null;
-        const [rows] = await db.query(`
-            SELECT tr.id_turno_reserva, tr.fecha_hora, tr.valor_total, tr.atendido,
-                   u_m.apellido AS medico_apellido, u_m.nombres AS medico_nombres,
-                   e.nombre AS especialidad, os.nombre AS obra_social
-            FROM turnos_reservas tr
-            JOIN medicos m ON tr.id_medico = m.id_medico
-            JOIN usuarios u_m ON m.id_usuario = u_m.id_usuario
-            JOIN especialidades e ON m.id_especialidad = e.id_especialidad
-            JOIN obras_sociales os ON tr.id_obra_social = os.id_obra_social
-            WHERE tr.id_paciente = ? AND tr.activo = 1
-            ORDER BY tr.fecha_hora DESC
-        `, [paciente[0].id_paciente]);
-        return rows;
+        const paciente = await pacientesRepo.getByUsuarioId(id_usuario);
+        if (!paciente) return null;
+        const rows = await turnosReservasRepo.getByPacienteId(paciente.id_paciente);
+        return rows.map(formatTurnoDTO);
     },
 
     create: async ({ id_usuario, rol, id_medico, id_paciente, fecha_hora }) => {
@@ -59,44 +40,37 @@ const turnosReservasService = {
         await connection.beginTransaction();
         try {
             if (rol === 2) {
-                const [pacienteRows] = await connection.query(
-                    "SELECT id_paciente FROM pacientes WHERE id_usuario = ?", [id_usuario]
-                );
-                if (pacienteRows.length === 0) throw { status: 404, mensaje: "Paciente no encontrado para este usuario" };
-                id_paciente = pacienteRows[0].id_paciente;
+                const paciente = await pacientesRepo.getByUsuarioId(id_usuario);
+                if (!paciente) throw { status: 404, mensaje: "Paciente no encontrado para este usuario" };
+                id_paciente = paciente.id_paciente;
             }
 
-            const [medicoRows] = await connection.query(
-                "SELECT valor_consulta FROM medicos WHERE id_medico = ?", [parseInt(id_medico)]
-            );
-            if (medicoRows.length === 0) throw { status: 404, mensaje: "Médico no encontrado" };
+            const medicoData = await medicosRepo.getValorConsulta(parseInt(id_medico));
+            if (!medicoData) throw { status: 404, mensaje: "Médico no encontrado" };
 
-            const [pacienteRows2] = await connection.query(
-                "SELECT id_obra_social FROM pacientes WHERE id_paciente = ?", [parseInt(id_paciente)]
-            );
-            if (pacienteRows2.length === 0) throw { status: 404, mensaje: "Paciente no encontrado" };
+            const pacienteData = await pacientesRepo.getObraSocial(parseInt(id_paciente));
+            if (!pacienteData) throw { status: 404, mensaje: "Paciente no encontrado" };
 
-            const { id_obra_social } = pacienteRows2[0];
-            const [osRows] = await connection.query(
-                "SELECT porcentaje_descuento, es_particular FROM obras_sociales WHERE id_obra_social = ? AND activo = 1",
-                [id_obra_social]
-            );
-            if (osRows.length === 0) throw { status: 404, mensaje: "Obra social no encontrada o inactiva" };
+            const osData = await obrasSocialesRepo.getById(pacienteData.id_obra_social);
+            if (!osData) throw { status: 404, mensaje: "Obra social no encontrada o inactiva" };
 
-            const { valor_consulta } = medicoRows[0];
-            const { porcentaje_descuento, es_particular } = osRows[0];
+            const { valor_consulta } = medicoData;
+            const { porcentaje_descuento, es_particular } = osData;
             const valor_total = es_particular == 1
                 ? parseFloat(valor_consulta)
                 : parseFloat(valor_consulta) - (parseFloat(porcentaje_descuento) * parseFloat(valor_consulta) / 100);
 
-            const [result] = await connection.query(
-                "INSERT INTO turnos_reservas (id_medico, id_paciente, id_obra_social, fecha_hora, valor_total) VALUES (?, ?, ?, ?, ?)",
-                [parseInt(id_medico), parseInt(id_paciente), id_obra_social, fecha_hora, valor_total.toFixed(2)]
-            );
+            const insertId = await turnosReservasRepo.create(connection, {
+                id_medico: parseInt(id_medico),
+                id_paciente: parseInt(id_paciente),
+                id_obra_social: pacienteData.id_obra_social,
+                fecha_hora,
+                valor_total: valor_total.toFixed(2)
+            });
 
             await connection.commit();
             connection.release();
-            return { id_turno_reserva: result.insertId, valor_total: valor_total.toFixed(2) };
+            return { id_turno_reserva: insertId, valor_total: valor_total.toFixed(2) };
         } catch (error) {
             await connection.rollback();
             connection.release();
@@ -105,21 +79,13 @@ const turnosReservasService = {
     },
 
     marcarAtendido: async (id, id_usuario, observaciones) => {
-        const [medico] = await db.query("SELECT id_medico FROM medicos WHERE id_usuario = ?", [id_usuario]);
-        if (medico.length === 0) return null;
-        const [result] = await db.query(
-            "UPDATE turnos_reservas SET atendido = 1, observaciones = ? WHERE id_turno_reserva = ? AND id_medico = ? AND activo = 1",
-            [observaciones || null, id, medico[0].id_medico]
-        );
-        return result.affectedRows;
+        const medico = await medicosRepo.getByUsuarioId(id_usuario);
+        if (!medico) return null;
+        return turnosReservasRepo.marcarAtendido(id, medico.id_medico, observaciones);
+
     },
 
-    delete: async (id) => {
-        const [result] = await db.query(
-            "UPDATE turnos_reservas SET activo = 0 WHERE id_turno_reserva = ?", [id]
-        );
-        return result.affectedRows;
-    }
+    delete: (id) => turnosReservasRepo.softDelete(id)
 };
 
 module.exports = turnosReservasService;

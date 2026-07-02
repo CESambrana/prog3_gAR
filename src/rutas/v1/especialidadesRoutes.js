@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const especialidadesController = require("../../controladores/especialidadesController");
-const { validacionDeEspecialidad, validarCampos } = require("../../middlewares/validador");
+const { validacionDeEspecialidad, validarCampos, param } = require("../../middlewares/validador");
 const { body } = require("express-validator");
 const verificarToken = require("../../middlewares/verificarToken");
 const verificarRol = require("../../middlewares/verificarRol");
@@ -105,11 +105,11 @@ const verificarRol = require("../../middlewares/verificarRol");
  *         description: Dada de baja correctamente
  */
 
-/* BROWSE - cualquier usuario autenticado puede listar */
-router.get("/", verificarToken, especialidadesController.getEspecialidades);
+/* BROWSE - paciente (2) y admin (3) */
+router.get("/", [verificarToken, verificarRol([2, 3])], especialidadesController.getEspecialidades);
 
-/* READ - cualquier usuario autenticado puede ver una */
-router.get("/:id", verificarToken, especialidadesController.getEspecialidadById);
+/* READ - paciente (2) y admin (3) */
+router.get("/:id", [verificarToken, verificarRol([2, 3]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], especialidadesController.getEspecialidadById);
 
 /* ADD - solo administrador (rol 3) */
 router.post(
@@ -124,6 +124,7 @@ router.put(
     [
         verificarToken,
         verificarRol([3]),
+        param("id", "El ID debe ser un número entero").isInt({ min: 1 }),
         body("nombre", "El nombre es obligatorio").trim().notEmpty(),
         validarCampos
     ],
@@ -131,6 +132,6 @@ router.put(
 );
 
 /* DELETE - solo administrador (rol 3) */
-router.delete("/:id", [verificarToken, verificarRol([3])], especialidadesController.eliminarEspecialidad);
+router.delete("/:id", [verificarToken, verificarRol([3]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], especialidadesController.eliminarEspecialidad);
 
 module.exports = router;

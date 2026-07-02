@@ -1,4 +1,4 @@
-const { body, param, validationResult } = require("express-validator");
+const { body, param, query, validationResult } = require("express-validator");
 
 // Función única para capturar y mostrar errores
 const validarCampos = (req, res, next) => {
@@ -41,5 +41,7 @@ module.exports = {
     validarCampos,
     validacionDeUsuario,
     validacionDeEspecialidad,
-    validacionDeObraSocial
+    validacionDeObraSocial,
+    param,
+    query
 };
