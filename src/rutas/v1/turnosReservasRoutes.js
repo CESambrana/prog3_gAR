@@ -82,6 +82,16 @@ const verificarRol = require("../../middlewares/verificarRol");
  *         required: true
  *         schema:
  *           type: integer
+
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               observaciones:
+ *                 type: string
+ *                 example: Paciente con fiebre leve, se receta ibuprofeno
  *     responses:
  *       200:
  *         description: Turno marcado como atendido
@@ -130,7 +140,13 @@ router.post(
 /* Marcar atendido - solo médico */
 router.patch(
     "/:id/atendido",
-    [verificarToken, verificarRol([1]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos],
+[
+    verificarToken,
+    verificarRol([1]),
+    param("id", "El ID debe ser un número entero").isInt({ min: 1 }),
+    body("observaciones").optional().trim().isLength({ max: 500 }),
+    validarCampos
+],
     turnosReservasController.marcarAtendido
 );
 

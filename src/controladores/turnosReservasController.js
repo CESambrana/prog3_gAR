@@ -46,7 +46,12 @@ const turnosReservasController = {
     marcarAtendido: async (req, res, next) => {
         try {
             const id = parseInt(req.params.id);
-            const affected = await turnosReservasService.marcarAtendido(id, req.usuario.id_usuario);
+
+            if (isNaN(id)) return res.status(400).json({ status: false, mensaje: "ID de turno inválido" });
+          
+            const { observaciones } = req.body || {};
+            const affected = await turnosReservasService.marcarAtendido(id, req.usuario.id_usuario, observaciones);
+          
             if (affected === null) return res.status(404).json({ status: false, mensaje: "Médico no encontrado" });
             if (affected === 0) return res.status(404).json({ status: false, mensaje: "Turno no encontrado o no pertenece a este médico" });
             res.json({ status: true, mensaje: "Turno marcado como atendido" });
