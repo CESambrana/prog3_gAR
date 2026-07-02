@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const turnosReservasController = require("../../controladores/turnosReservasController");
 const { body } = require("express-validator");
-const { validarCampos } = require("../../middlewares/validador");
+const { validarCampos, param } = require("../../middlewares/validador");
 const verificarToken = require("../../middlewares/verificarToken");
 const verificarRol = require("../../middlewares/verificarRol");
 
@@ -130,11 +130,11 @@ router.post(
 /* Marcar atendido - solo médico */
 router.patch(
     "/:id/atendido",
-    [verificarToken, verificarRol([1])],
+    [verificarToken, verificarRol([1]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos],
     turnosReservasController.marcarAtendido
 );
 
 /* DELETE - solo admin */
-router.delete("/:id", [verificarToken, verificarRol([3])], turnosReservasController.eliminarTurno);
+router.delete("/:id", [verificarToken, verificarRol([3]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], turnosReservasController.eliminarTurno);
 
 module.exports = router;

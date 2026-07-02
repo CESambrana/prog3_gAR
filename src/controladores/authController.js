@@ -1,7 +1,7 @@
 const authService = require('../servicios/authService');
 
 const authController = {
-    login: async (req, res) => {
+    login: async (req, res, next) => {
         try {
             const { email, contrasenia } = req.body;
             const token = await authService.login(email, contrasenia);
@@ -10,7 +10,7 @@ const authController = {
             }
             res.json({ status: true, mensaje: "Login exitoso", token });
         } catch (error) {
-            res.status(500).json({ status: false, mensaje: "Error al iniciar sesión", error: error.message });
+            next(error);
         }
     }
 };

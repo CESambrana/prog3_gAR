@@ -1,61 +1,40 @@
-# 🏥 Sistema de Gestión de Clínica - Backend (TFI)
+# Clínica Médica - API REST
 
-Proyecto de creacion de una una API REST construida con Node.js y Express, diseñada para gestionar las operaciones de una clínica médica.
+API REST para el sistema de gestión de una clínica médica. Permite administrar usuarios, médicos, pacientes, especialidades, obras sociales y turnos, con autenticación JWT y control de acceso por roles.
 
+## Integrantes del Grupo AR
 
-## 🛠️ Tecnologías Utilizadas
-* **Node.js**: Entorno de ejecución.
-* **Express**: Framework para el servidor web.
-* **MySQL**: Sistema de gestión de base de datos.
-* **Morgan**: Middleware para el registro de solicitudes (logging).
-* **Cors**: Manejo de permisos de acceso.
-* **Dotenv**: Gestión de variables de entorno.
+- Cristian Emmanuel Sambrana
+- Linda Galeano
+- Luciana Espil
 
 
-## 📋 Requisitos Previos
-1.  Tener instalado [Node.js](https://nodejs.org/).
-2.  Contar con una instancia de **MySQL** activa.
-3.  Ejecutar el script SQL de creación de base de datos y tablas (incluido en la carpeta `/db` o adjunto).
+## Roles del Sistema
 
+| Rol | Descripción |
+|-----|-------------|
+| 1   | Médico      |
+| 2   | Paciente    |
+| 3   | Administrador |
 
-## ⚙️ Instalación y Configuración
+## Endpoints Principales
 
-1.  **Clonar el repositorio:**
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/v1/auth/login` | Login, devuelve JWT |
+| GET | `/api/v1/usuarios` | Listar usuarios (admin) |
+| GET | `/api/v1/medicos` | Listar médicos |
+| GET | `/api/v1/pacientes` | Listar pacientes (admin) |
+| GET | `/api/v1/especialidades` | Listar especialidades |
+| GET | `/api/v1/obras-sociales` | Listar obras sociales |
+| GET | `/api/v1/turnos-reservas` | Listar turnos (admin) |
+| GET | `/api/v1/turnos-reservas/mis-turnos` | Turnos propios (médico/paciente) |
+| POST | `/api/v1/turnos-reservas` | Reservar turno |
+| PATCH | `/api/v1/turnos-reservas/:id/atendido` | Marcar atendido (médico) |
+| GET | `/api/v1/estadisticas` | Estadísticas en JSON (admin) |
+| GET | `/api/v1/estadisticas/pdf` | Informe PDF (admin) |
 
-2.  **Instalar dependencias:**
-    ```bash
-    npm install
-    ```
-
-3.  **Configurar variables de entorno:**
-    Copia el archivo `.env.example` y renombralo a `.env`. Luego, completá los datos de tu conexión local:
-    ```bash
-    PORT=3000
-    DB_HOST=localhost
-    DB_USER=root
-    DB_PASSWORD=mysql
-    DB_NAME=clinica_prog3
-    ```
-
-4.  **Iniciar el servidor:**
-    * Para desarrollo (con nodemon): `npm run dev`
-    * Para producción: `npm start`
-
-
-## 🛣️ Endpoints Principales (Entidad: Usuarios)
-La API responde en el prefijo base: `http://localhost:PORT/api/v1/usuarios`
-
-| Método | Endpoint | Descripción |
-| :--- | :--- | :--- |
-| **GET** | `/` | Listar todos los usuarios activos. |
-| **GET** | `/:id` | Obtener un usuario específico por ID. |
-| **POST** | `/` | Crear un nuevo usuario. |
-| **PUT** | `/:id` | Editar los datos de un usuario existente. |
-| **DELETE** | `/:id` | Realizar borrado lógico del usuario. |
-
----
-
-## 👥 Integrantes del Grupo
-* Cristian Emmanuel Sambrana
-* Linda Galeano
-* Luciana Espil
+Todos los endpoints (excepto login) requieren el header:
+```
+Authorization: Bearer <token>
+```

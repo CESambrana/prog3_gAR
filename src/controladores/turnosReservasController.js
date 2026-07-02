@@ -1,16 +1,16 @@
 const turnosReservasService = require('../servicios/turnosReservasService');
 
 const turnosReservasController = {
-    getTurnos: async (req, res) => {
+    getTurnos: async (req, res, next) => {
         try {
             const data = await turnosReservasService.getAll();
             res.json({ status: true, data });
         } catch (error) {
-            res.status(500).json({ status: false, mensaje: "Error al obtener turnos", error: error.message });
+            next(error);
         }
     },
 
-    getMisTurnos: async (req, res) => {
+    getMisTurnos: async (req, res, next) => {
         try {
             const { id_usuario, rol } = req.usuario;
             let data;
@@ -25,11 +25,11 @@ const turnosReservasController = {
             }
             res.json({ status: true, data });
         } catch (error) {
-            res.status(500).json({ status: false, mensaje: "Error al obtener turnos", error: error.message });
+            next(error);
         }
     },
 
-    crearTurno: async (req, res) => {
+    crearTurno: async (req, res, next) => {
         try {
             const { id_usuario, rol } = req.usuario;
             const { id_medico, fecha_hora, id_paciente } = req.body;
@@ -39,31 +39,29 @@ const turnosReservasController = {
             const result = await turnosReservasService.create({ id_usuario, rol, id_medico, id_paciente, fecha_hora });
             res.status(201).json({ status: true, mensaje: "Turno creado correctamente", ...result });
         } catch (error) {
-            const statusCode = error.status || 500;
-            res.status(statusCode).json({ status: false, mensaje: error.mensaje || "Error al crear turno", error: error.message });
+            next(error);
         }
     },
 
-    marcarAtendido: async (req, res) => {
+    marcarAtendido: async (req, res, next) => {
         try {
             const id = parseInt(req.params.id);
-            if (isNaN(id)) return res.status(400).json({ status: false, mensaje: "ID de turno inválido" });
             const affected = await turnosReservasService.marcarAtendido(id, req.usuario.id_usuario);
             if (affected === null) return res.status(404).json({ status: false, mensaje: "Médico no encontrado" });
             if (affected === 0) return res.status(404).json({ status: false, mensaje: "Turno no encontrado o no pertenece a este médico" });
             res.json({ status: true, mensaje: "Turno marcado como atendido" });
         } catch (error) {
-            res.status(500).json({ status: false, mensaje: "Error al actualizar turno", error: error.message });
+            next(error);
         }
     },
 
-    eliminarTurno: async (req, res) => {
+    eliminarTurno: async (req, res, next) => {
         try {
             const affected = await turnosReservasService.delete(parseInt(req.params.id));
             if (affected === 0) return res.status(404).json({ status: false, mensaje: "Turno no encontrado" });
             res.json({ status: true, mensaje: "Turno eliminado (baja lógica)" });
         } catch (error) {
-            res.status(500).json({ status: false, mensaje: "Error al eliminar turno", error: error.message });
+            next(error);
         }
     }
 };

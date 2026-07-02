@@ -1,21 +1,33 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const errorHandler = require("./middlewares/errorHandler");
+const registrarAuditoria = require("./middlewares/auditoria");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 
 process.loadEnvFile();
 
-const db = require("./db/db");
 const v1Routes = require("./rutas/v1/index");
 
 const app = express();
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { status: false, mensaje: 'Demasiadas solicitudes desde esta IP, intente más tarde' }
+});
+
 // middlewares
+app.use(helmet());
 app.use(cors());
+app.use(limiter);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+app.use(registrarAuditoria);
 
 // Swagger
 const swaggerOptions = {
@@ -43,22 +55,9 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ruta de prueba
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando");
-});
-
-// TEST DB
-app.get("/test-db", async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT 1 AS conectado");
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.use("/api/v1", v1Routes);
+
+app.use(errorHandler);
 
 const PUERTO = process.env.PUERTO || 3000;
 app.listen(PUERTO, () => {

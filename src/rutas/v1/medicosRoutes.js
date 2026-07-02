@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const medicosController = require("../../controladores/medicosController");
 const { body } = require("express-validator");
-const { validarCampos } = require("../../middlewares/validador");
+const { validarCampos, param } = require("../../middlewares/validador");
 const verificarToken = require("../../middlewares/verificarToken");
 const verificarRol = require("../../middlewares/verificarRol");
 
@@ -143,14 +143,14 @@ const validacionDeMedico = [
  *         description: Dado de baja correctamente
  */
 
-/* BROWSE - cualquier usuario autenticado */
-router.get("/", verificarToken, medicosController.getMedicos);
+/* BROWSE - paciente (2) y admin (3) */
+router.get("/", [verificarToken, verificarRol([2, 3])], medicosController.getMedicos);
 
-/* BROWSE por especialidad - cualquier usuario autenticado */
-router.get("/especialidad/:id_especialidad", verificarToken, medicosController.getMedicosPorEspecialidad);
+/* BROWSE por especialidad - paciente (2) y admin (3) */
+router.get("/especialidad/:id_especialidad", [verificarToken, verificarRol([2, 3]), param("id_especialidad", "El ID de especialidad debe ser un número entero").isInt({ min: 1 }), validarCampos], medicosController.getMedicosPorEspecialidad);
 
-/* READ - cualquier usuario autenticado */
-router.get("/:id", verificarToken, medicosController.getMedicoById);
+/* READ - paciente (2) y admin (3) */
+router.get("/:id", [verificarToken, verificarRol([2, 3]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], medicosController.getMedicoById);
 
 /* ADD - solo admin */
 router.post("/", [verificarToken, verificarRol([3]), ...validacionDeMedico], medicosController.crearMedico);
@@ -161,6 +161,7 @@ router.put(
     [
         verificarToken,
         verificarRol([3]),
+        param("id", "El ID debe ser un número entero").isInt({ min: 1 }),
         body("id_especialidad", "La especialidad es obligatoria").isInt({ min: 1 }),
         body("matricula", "La matrícula debe ser numérica").isInt({ min: 1 }),
         body("valor_consulta", "El valor de consulta debe ser un número").isDecimal(),
@@ -170,10 +171,10 @@ router.put(
 );
 
 /* DELETE - solo admin */
-router.delete("/:id", [verificarToken, verificarRol([3])], medicosController.eliminarMedico);
+router.delete("/:id", [verificarToken, verificarRol([3]), param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], medicosController.eliminarMedico);
 
 /* Listar obras sociales de un médico */
-router.get("/:id/obras-sociales", verificarToken, medicosController.getObrasSocialesDelMedico);
+router.get("/:id/obras-sociales", [verificarToken, param("id", "El ID debe ser un número entero").isInt({ min: 1 }), validarCampos], medicosController.getObrasSocialesDelMedico);
 
 /* Asociar médico con obra social - solo admin */
 router.post(
@@ -181,6 +182,7 @@ router.post(
     [
         verificarToken,
         verificarRol([3]),
+        param("id", "El ID debe ser un número entero").isInt({ min: 1 }),
         body("id_obra_social", "El id_obra_social es obligatorio").isInt({ min: 1 }),
         validarCampos
     ],
