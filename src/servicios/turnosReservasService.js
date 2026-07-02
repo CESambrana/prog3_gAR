@@ -78,10 +78,10 @@ const turnosReservasService = {
         }
     },
 
-    marcarAtendido: async (id, id_usuario) => {
+    marcarAtendido: async (id, id_usuario, observaciones) => {
         const medico = await medicosRepo.getByUsuarioId(id_usuario);
         if (!medico) return null;
-        return turnosReservasRepo.marcarAtendido(id, medico.id_medico);
+        return turnosReservasRepo.marcarAtendido(id, medico.id_medico, observaciones);
     },
 
     delete: (id) => turnosReservasRepo.softDelete(id)

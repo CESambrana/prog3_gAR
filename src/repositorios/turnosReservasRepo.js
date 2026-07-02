@@ -58,10 +58,10 @@ const turnosReservasRepo = {
         return result.insertId;
     },
 
-    marcarAtendido: async (id, id_medico) => {
+    marcarAtendido: async (id, id_medico, observaciones) => {
         const [result] = await db.query(
-            "UPDATE turnos_reservas SET atendido = 1 WHERE id_turno_reserva = ? AND id_medico = ? AND activo = 1",
-            [id, id_medico]
+            "UPDATE turnos_reservas SET atendido = 1, observaciones = ? WHERE id_turno_reserva = ? AND id_medico = ? AND activo = 1",
+            [observaciones || null, id, id_medico]
         );
         return result.affectedRows;
     },
